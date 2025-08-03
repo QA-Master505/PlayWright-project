@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
 
+test.use({ headless: false }); // 👈 forces headed mode
+
 test('Validate required fields on job application form', async ({ page }) => {
   await page.goto('https://www.ketryx.com/');
   await page.getByTestId('uc-accept-all-button').click();
