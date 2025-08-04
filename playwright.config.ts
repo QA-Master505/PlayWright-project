@@ -30,6 +30,13 @@ export default defineConfig({
     /* Base URL to use in actions like `await page.goto('/')`. */
     // baseURL: 'http://localhost:3000',
 
+    // headless: true → browser is hidden
+    // headless: false → browser is visible while testing
+    headless: false,
+    
+    // slows each action by 500ms
+    slowMo : 500,
+
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
   },
