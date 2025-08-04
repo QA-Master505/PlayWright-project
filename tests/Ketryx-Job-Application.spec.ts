@@ -23,8 +23,20 @@ test('Required fields display errors on empty form submission', async ({ page })
     await page.goto('https://www.ketryx.com/');
   });
 
-  await test.step('Accept cookie consent popup', async () => {
-    await page.getByTestId('uc-accept-all-button').click();
+  await test.step('Accept cookie consent popup if present', async () => {
+    // Accept cookie consent only if it is visible
+    try {
+      const cookieBtn = page.getByTestId('uc-accept-all-button');
+      // Wait up to 5 seconds for the cookie popup, but do not fail if not found
+      if (await cookieBtn.isVisible({ timeout: 5000 })) {
+        await cookieBtn.click();
+      } else {
+        console.log('Cookie consent popup not visible, continuing...');
+      }
+    } catch (e) {
+      // In CI, sometimes the popup doesn't appear at all
+      console.log('Cookie consent popup not found, skipping.');
+    }
   });
 
   await test.step('Click on the Careers link', async () => {
@@ -72,7 +84,6 @@ test('Required fields display errors on empty form submission', async ({ page })
   });
 
   await test.step('Validate and highlight "Test automation experience is required" error', async () => {
-    // Scroll the error into view to ensure it is visible before highlighting
     const locator = page1.getByTestId('question_10597302008-error');
     await locator.scrollIntoViewIfNeeded();
     await expect(page1.getByTestId('question_10597302008-error')).toBeVisible();
@@ -90,7 +101,6 @@ test('Required fields display errors on empty form submission', async ({ page })
   });
 
   await test.step('Validate and highlight "Current location is required" error', async () => {
-    // Scroll to ensure the error message is visible for the highlight
     const locator = page1.getByTestId('question_11703855008-error');
     await locator.scrollIntoViewIfNeeded();
     await expect(page1.getByTestId('question_11703855008-error')).toBeVisible();
@@ -101,7 +111,6 @@ test('Required fields display errors on empty form submission', async ({ page })
     const idSelector = '#question_11522906008-error';
     await expect(page1.locator(idSelector)).toBeVisible();
   });
-
 
   await test.step('Validate "Submit application" button is visible', async () => {
     await expect(page1.getByRole('button', { name: 'Submit application' })).toBeVisible();
