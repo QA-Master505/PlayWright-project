@@ -1,19 +1,33 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
 
-test.use({ headless: false }); // 👈 forces headed mode
+// Helper to highlight error message element (for all fields)
+async function highlightError(page: Page, testId: string) {
+  await page.evaluate((id) => {
+    const el = document.querySelector(`[data-testid="${id}"]`);
+    if (el) {
+      el.style.display = 'block';
+      el.style.width = '100%';
+      el.style.boxSizing = 'border-box';
+      el.style.border = '2px solid red';
+      el.style.backgroundColor = 'rgba(255, 0, 0, 0.15)';
+      el.style.transition = 'all 0.35s';
+    }
+  }, testId);
+  await page.waitForTimeout(2000); // Pause to make the highlight visible
+}
 
-test('Validate required fields on job application form', async ({ page }) => {
-  let page1;
+test('Required fields display errors on empty form submission', async ({ page }) => {
+  let page1: Page;
 
-  await test.step('Navigating to URL', async () => {
+  await test.step('Navigate to Ketryx website', async () => {
     await page.goto('https://www.ketryx.com/');
   });
 
-  await test.step('Accept Privacy popup', async () => {
+  await test.step('Accept cookie consent popup', async () => {
     await page.getByTestId('uc-accept-all-button').click();
   });
 
-  await test.step('Click on the Careers Link', async () => {
+  await test.step('Click on the Careers link', async () => {
     await page.getByRole('link', { name: 'Careers' }).click();
   });
 
@@ -28,6 +42,12 @@ test('Validate required fields on job application form', async ({ page }) => {
     await page1.waitForLoadState('domcontentloaded');
   });
 
+  await test.step('Click on the Apply button', async () => {
+    const applyBtn = page1.getByRole('button', { name: 'Apply' });
+    await applyBtn.waitFor({ state: 'visible' });
+    await applyBtn.click();
+  });
+
   await test.step('Click on the Submit application button', async () => {
     const submitBtn = page1.getByRole('button', { name: 'Submit application' });
     await submitBtn.scrollIntoViewIfNeeded();
@@ -35,9 +55,60 @@ test('Validate required fields on job application form', async ({ page }) => {
     await submitBtn.click();
   });
 
-  await test.step('Capture screenshot and validate error message', async () => {
-    await page1.waitForTimeout(1000); // Help Safari catch up
-    // await page1.screenshot({ path: 'safari-after-submit.png', fullPage: true }); // Screenshot added
-    await expect(page1.getByTestId('first_name-error')).toHaveText(/First Name is required/i, { timeout: 7000 });
+  // Main error verifications for core fields
+  await test.step('Validate and highlight "First Name is required" error', async () => {
+    await expect(page1.getByTestId('first_name-error')).toHaveText(/First Name is required/i, { timeout: 3000 });
+    await highlightError(page1, 'first_name-error');
+  });
+
+  await test.step('Validate and highlight "Last Name is required" error', async () => {
+    await expect(page1.getByTestId('last_name-error')).toHaveText(/Last Name is required/i, { timeout: 3000 });
+    await highlightError(page1, 'last_name-error');
+  });
+
+  await test.step('Validate and highlight "Email is required" error', async () => {
+    await expect(page1.getByTestId('email-error')).toHaveText(/Email is required/i, { timeout: 3000 });
+    await highlightError(page1, 'email-error');
+  });
+
+  await test.step('Validate and highlight "Test automation experience is required" error', async () => {
+    // Scroll the error into view to ensure it is visible before highlighting
+    const locator = page1.getByTestId('question_10597302008-error');
+    await locator.scrollIntoViewIfNeeded();
+    await expect(page1.getByTestId('question_10597302008-error')).toBeVisible();
+    await highlightError(page1, 'question_10597302008-error');
+  });
+
+  await test.step('Validate and highlight "Typescript/Javascript experience is required" error', async () => {
+    await expect(page1.getByTestId('question_10597303008-error')).toBeVisible();
+    await highlightError(page1, 'question_10597303008-error');
+  });
+
+  await test.step('Validate and highlight "EU citizenship or RWR+ card is required" error', async () => {
+    await expect(page1.getByTestId('question_10597304008-error')).toBeVisible();
+    await highlightError(page1, 'question_10597304008-error');
+  });
+
+  await test.step('Validate and highlight "Current location is required" error', async () => {
+    // Scroll to ensure the error message is visible for the highlight
+    const locator = page1.getByTestId('question_11703855008-error');
+    await locator.scrollIntoViewIfNeeded();
+    await expect(page1.getByTestId('question_11703855008-error')).toBeVisible();
+    await highlightError(page1, 'question_11703855008-error');
+  });
+
+  await test.step('Validate "Where did you learn of the position is required" error', async () => {
+    const idSelector = '#question_11522906008-error';
+    await expect(page1.locator(idSelector)).toBeVisible();
+  });
+
+
+  await test.step('Validate "Submit application" button is visible', async () => {
+    await expect(page1.getByRole('button', { name: 'Submit application' })).toBeVisible();
+  });
+
+  // Pause a bit at the end so all highlights are visible
+  await test.step('Pause to view highlights', async () => {
+    await page1.waitForTimeout(3000);
   });
 });
