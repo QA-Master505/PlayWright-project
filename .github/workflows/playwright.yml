@@ -25,7 +25,7 @@ jobs:
         run: npx playwright install --with-deps
 
       - name: Run Playwright tests (Chrome only)
-        run: npx playwright test tests/Ketryx-Job-Application.spec.ts --project="Google Chrome" --headless --workers=1
+        run: npx playwright test tests/Ketryx-Job-Application.spec.ts --project="Google Chrome" --workers=1
 
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
