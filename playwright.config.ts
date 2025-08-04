@@ -32,10 +32,10 @@ export default defineConfig({
 
     // headless: true → browser is hidden
     // headless: false → browser is visible while testing
-    headless: false,
+    headless: process.env.CI ? true : false, // Use headless only in CI/CD
     
     // slows each action by 500ms
-    slowMo : 500,
+    slowMo: process.env.CI ? 0 : 500,  // No slowMo in CI
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
